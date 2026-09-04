@@ -10,7 +10,7 @@ Keep this file short. It contains repository-wide invariants that are relevant i
 4. Upstream accepted artifacts constrain downstream artifacts. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
 5. Repository source, tests, and configuration are authoritative for the current implemented state. Accepted artifacts authorize the intended change.
 6. `REVIEW.md` defines review policy, not product intent.
-7. `docs/` and any optional supporting workspace such as `prototype/` are supporting material and never override accepted root artifacts.
+7. `docs/` is supporting/reference/history material. If `prototype/` exists, it is supporting discovery material. Neither overrides accepted root artifacts.
 
 ## SDLC gates
 
@@ -29,16 +29,16 @@ Use the `sdlc-artifacts` skill whenever creating, revising, or checking readines
 
 - Use repository-local skills from `.agents/skills/` when their trigger applies.
 - Treat Context7, Serena, and Graphify as optional capabilities, not mandatory gates.
+- When the product stack becomes concrete, use the `repository-quality` skill to discover existing quality tooling or bootstrap a minimal stack-appropriate setup when it is missing.
 - Do not force-push, rewrite history, hard-reset shared work, or delete unrelated changes unless explicitly instructed.
 - Do not weaken tests, lint rules, type checks, security checks, or configuration merely to make validation pass.
 - Do not commit tool caches or generated analysis metadata. The default `.gitignore` excludes known Serena and Graphify outputs.
 - Prefer repository-native commands and conventions over agent preferences.
 - Keep agent-specific adapters thin. Put shared policy in this file, skills, or deterministic scripts instead of duplicating it per agent.
-- Optional supporting workspaces must not become dependencies of the core SDLC control plane unless the human owner explicitly promotes them.
 
 ## Canonical project commands
 
-These are intentionally unset in the generic template. Once the application stack is established, replace `not configured` with the repository-native commands.
+These are intentionally unset in the generic template. Once the product stack is established, use the `repository-quality` skill to discover or bootstrap the repository-native quality toolchain and replace the applicable `not configured` entries with exact commands. Use `not applicable` only for genuinely irrelevant gates.
 
 - Build: not configured
 - Test: not configured
@@ -52,7 +52,7 @@ Before reporting implementation complete:
 
 - Confirm the accepted plan is satisfied or explicitly revised.
 - Run the applicable repository-native validation.
-- If an optional `prototype/` workspace exists and changed, run the checks documented inside that workspace.
+- If an optional self-contained workspace changed, run its applicable local quality checks too.
 - Report the exact validation performed and its result.
 - Review the change against `REVIEW.md`.
 - Confirm no generated analysis metadata, credentials, or unrelated changes are included.
