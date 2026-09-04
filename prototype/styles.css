@@ -1,0 +1,45 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.prototype-shell {
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+}
+
+.prototype-card {
+  width: min(100%, 640px);
+  padding: 32px;
+  border: 1px solid #dbe3ee;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgb(15 23 42 / 8%);
+}
+
+.prototype-card h1,
+.prototype-card p {
+  margin-top: 0;
+}
+
+.prototype-card p:last-child {
+  margin-bottom: 0;
+}
+
+.prototype-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

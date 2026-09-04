@@ -10,7 +10,7 @@ Keep this file short. It contains repository-wide invariants that are relevant i
 4. Upstream accepted artifacts constrain downstream artifacts. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
 5. Repository source, tests, and configuration are authoritative for the current implemented state. Accepted artifacts authorize the intended change.
 6. `REVIEW.md` defines review policy, not product intent.
-7. `docs/` is supporting/reference/history material and never overrides accepted root artifacts.
+7. `docs/` and `prototype/` are supporting material and never override accepted root artifacts.
 
 ## SDLC gates
 
@@ -44,6 +44,7 @@ These are intentionally unset in the generic template. Once the application stac
 - Lint: not configured
 - Format check: not configured
 - Type check: not configured
+- Prototype quality: `cd prototype && npm run check` after prototype dependencies are installed
 
 ## Definition of done
 
@@ -51,6 +52,7 @@ Before reporting implementation complete:
 
 - Confirm the accepted plan is satisfied or explicitly revised.
 - Run the applicable repository-native validation.
+- If `prototype/` changed, run its applicable quality checks.
 - Report the exact validation performed and its result.
 - Review the change against `REVIEW.md`.
 - Confirm no generated analysis metadata, credentials, or unrelated changes are included.
