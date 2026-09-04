@@ -1,0 +1,17 @@
+# OS/editor noise
+.DS_Store
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+.tmp/
+tmp/
+
+# Agent/tool-generated analysis metadata
+.serena/
+graphify-out/
+.graphify/
