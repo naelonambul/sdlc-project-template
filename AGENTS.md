@@ -10,7 +10,7 @@ Keep this file short. It contains repository-wide invariants that are relevant i
 4. Upstream accepted artifacts constrain downstream artifacts. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
 5. Repository source, tests, and configuration are authoritative for the current implemented state. Accepted artifacts authorize the intended change.
 6. `REVIEW.md` defines review policy, not product intent.
-7. `docs/` and `prototype/` are supporting material and never override accepted root artifacts.
+7. `docs/` and any optional supporting workspace such as `prototype/` are supporting material and never override accepted root artifacts.
 
 ## SDLC gates
 
@@ -34,6 +34,7 @@ Use the `sdlc-artifacts` skill whenever creating, revising, or checking readines
 - Do not commit tool caches or generated analysis metadata. The default `.gitignore` excludes known Serena and Graphify outputs.
 - Prefer repository-native commands and conventions over agent preferences.
 - Keep agent-specific adapters thin. Put shared policy in this file, skills, or deterministic scripts instead of duplicating it per agent.
+- Optional supporting workspaces must not become dependencies of the core SDLC control plane unless the human owner explicitly promotes them.
 
 ## Canonical project commands
 
@@ -44,7 +45,6 @@ These are intentionally unset in the generic template. Once the application stac
 - Lint: not configured
 - Format check: not configured
 - Type check: not configured
-- Prototype quality: `cd prototype && npm run check` after prototype dependencies are installed
 
 ## Definition of done
 
@@ -52,7 +52,7 @@ Before reporting implementation complete:
 
 - Confirm the accepted plan is satisfied or explicitly revised.
 - Run the applicable repository-native validation.
-- If `prototype/` changed, run its applicable quality checks.
+- If an optional `prototype/` workspace exists and changed, run the checks documented inside that workspace.
 - Report the exact validation performed and its result.
 - Review the change against `REVIEW.md`.
 - Confirm no generated analysis metadata, credentials, or unrelated changes are included.
