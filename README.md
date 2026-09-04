@@ -41,11 +41,18 @@ See `.agents/skills/sdlc-artifacts/SKILL.md` for the artifact workflow.
 - `scripts/`: deterministic checks and agent-neutral hook implementations.
 - `evals/`: regression evaluations for agent behavior and configuration.
 - `docs/`: supporting, reference, and historical documentation only.
+- `prototype/`: ready-to-use plain HTML/CSS/JavaScript discovery workspace with lint and formatting.
 - `.github/`: pull-request and CI integration.
+
+## Prototype workspace
+
+`prototype/` is preconfigured for disposable UI/UX discovery with vanilla HTML, CSS, and JavaScript. Its quality stack mirrors the proven Pungsu prototype setup: ESLint, Stylelint, HTMLHint, and Prettier. Run `npm install` once inside the directory on each project/machine, then use `npm run check` as the canonical prototype validation command.
+
+Prototype output is evidence and exploration, not authority. Any discovery that changes an accepted root artifact must go back through the relevant human gate.
 
 ## Authority model
 
-The root artifact chain is the current SDLC authority for the active project workflow. `docs/` is supporting material and must not override accepted root artifacts.
+The root artifact chain is the current SDLC authority for the active project workflow. `docs/` and `prototype/` are supporting material and must not override accepted root artifacts.
 
 This starter is intentionally optimized for one active project-level artifact chain at a time, which keeps a solo-developer workflow simple. A project that later needs independent concurrent initiatives can namespace its artifacts without changing the underlying gate semantics.
 
