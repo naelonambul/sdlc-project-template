@@ -26,5 +26,13 @@
     "docs/**",
     "evals/README.md"
   ],
-  "approvals": []
+  "approvals": [
+    {
+      "artifact": "plan.md",
+      "sha256": "sha256:9022ed1d09fda7f9b5836fca7638ecbd4505f53e81443c7acc46599829980043",
+      "by": "naelonambul (owner)",
+      "at": "2026-09-23T11:23:52Z",
+      "note": "Owner approval given in chat for this exact digest; recorded by the agent. Local claim: unverified."
+    }
+  ]
 }
