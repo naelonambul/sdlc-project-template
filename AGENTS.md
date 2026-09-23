@@ -31,25 +31,21 @@ Use the `sdlc-artifacts` skill whenever creating, revising, approving, or closin
 - Do not weaken tests, lint rules, type checks, security checks, or configuration merely to make validation pass.
 - Do not commit tool caches or generated analysis metadata. The default `.gitignore` excludes known Serena and Graphify outputs.
 - Prefer repository-native commands and conventions over agent preferences.
-- Keep agent-specific adapters thin. Put shared policy in this file, skills, or deterministic scripts instead of duplicating it per agent.
+- Keep agent-specific adapters thin. Put shared policy in this file, skills, or deterministic scripts instead of duplicating it per agent. Do not add a `CLAUDE.md` that replaces this file; see `docs/agent-surfaces.md`.
 
-## Canonical project commands
+## Canonical commands
 
-These are intentionally unset in the generic template. Once the product stack is established, use the `repository-quality` skill to discover or bootstrap the repository-native quality toolchain and replace the applicable `not configured` entries with exact commands. Use `not applicable` only for genuinely irrelevant gates.
+- `python3 scripts/repo.py status --change <id>`: lifecycle, approval, identity, write-scope, and agent-surface gates.
+- `python3 scripts/repo.py verify --change <id>`: runs the checks registered in `checks.json` that the diff routes to (`--full` for all), and writes evidence to `.evidence/`.
 
-- Build: not configured
-- Test: not configured
-- Lint: not configured
-- Format check: not configured
-- Type check: not configured
+Project build, test, lint, format-check, and type-check commands are registered as checks in `checks.json`, not listed here. The generic template needs only Python 3 and Git. Stack toolchains belong to the product that adopts them. Use the `repository-quality` skill to discover or bootstrap them.
 
 ## Definition of done
 
 Before reporting implementation complete:
 
 - Confirm the approved change plan is satisfied or explicitly revised and re-approved.
-- Run the applicable repository-native validation.
-- If an optional self-contained workspace changed, run its applicable local quality checks too.
-- Report the exact validation performed and its result.
+- `repo.py status --change <id>` passes and `repo.py verify --change <id>` reports no `failed` or `blocked` check.
+- Report the exact validation performed, its result, and the evidence path. `blocked` is never success.
 - Review the change against `REVIEW.md`.
 - Confirm no generated analysis metadata, credentials, or unrelated changes are included.

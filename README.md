@@ -33,19 +33,25 @@ See `.agents/skills/sdlc-artifacts/SKILL.md` for the workflow.
 - `REVIEW.md`: shared review rubric.
 - `intent.md`, `spec.md`: durable product baseline (why, and what must be true).
 - `changes/`: one packet per change, with its own plan; `changes/README.md` defines the model.
-- `scripts/repo.py`: computes change status and enforces gates.
-- `.agents/skills/`: on-demand shared agent procedures and tool policies.
-- `scripts/`: deterministic checks and agent-neutral hook implementations.
-- `evals/`: regression evaluations for agent behavior and configuration.
+- `scripts/repo.py`: `status` computes change state and enforces gates; `verify` runs registered checks with routing and evidence. Standard-library Python only.
+- `checks.json`: the check registry (exact argv, cwd, timeout, routed paths, required tools, group).
+- `.agents/skills/`: on-demand shared agent procedures and tool policies. `.claude/skills/` holds thin symlink adapters.
+- `evals/`: agent regression evaluations, added only from observed failures.
 - `docs/`: supporting, reference, and historical documentation only.
 - `prototype/`: optional, removable plain HTML/CSS/JavaScript discovery workspace with lint and formatting.
-- `.github/`: pull-request and CI integration.
+- `.github/`: the `Change-ID` pull-request template and the `repository` CI workflow. See `docs/host-setup.md` for one-time GitHub settings.
 
 ## Optional prototype workspace
 
-`prototype/` is a self-contained UI/UX discovery workspace using vanilla HTML, CSS, and JavaScript. Its quality stack mirrors the proven Pungsu prototype setup: ESLint, Stylelint, HTMLHint, and Prettier. Run `npm install` once inside the directory on each project/machine, then use `npm run check` as its local validation command.
+`prototype/` is a self-contained UI/UX discovery workspace using vanilla HTML, CSS, and JavaScript. Its quality stack mirrors the proven Pungsu prototype setup: ESLint, Stylelint, HTMLHint, and Prettier. It is the template's only Node.js dependency. Run `npm ci` inside the directory, then `npm run check`, or `python3 scripts/repo.py verify --group prototype`.
 
-The directory is deliberately optional. Projects that do not need a frontend or UI prototype, including backend-only projects, can delete the entire `prototype/` directory. The root SDLC files, skills, scripts, and project commands do not depend on it, so no replacement config or cleanup should be required after deletion.
+The directory is deliberately optional. Projects that do not need a frontend or UI prototype, including backend-only projects, can delete it. Deleting it takes three steps:
+
+1. Remove the `prototype/` directory.
+2. Remove its `prototype` entry in `checks.json`.
+3. Remove the `verify-prototype` job, and its entry in the summary's `needs`, from `.github/workflows/repository.yml`.
+
+`repo.py status` fails until `checks.json` and the workflow agree. Nothing else depends on the prototype.
 
 Prototype output is evidence and exploration, not authority. Any discovery that changes the baseline or an approved change must go back through the relevant owner approval.
 
@@ -73,7 +79,11 @@ Claude Code discovers these skills through thin `.claude/skills/<name>` symlinks
 
 ## Project initialization
 
-When a project chooses its application stack, establish the repository-native build, test, lint, format-check, and type-check commands, then record the canonical commands in `AGENTS.md`. Add deterministic wrappers and CI only when they represent real project behavior.
+When a project chooses its application stack, establish the repository-native build, test, lint, format-check, and type-check commands. Register each as a check in `checks.json`, and give checks that need a new toolchain their own group and CI job. Then do the one-time GitHub setup in `docs/host-setup.md`.
+
+## Template releases
+
+Template versions are Git tags plus release notes. A downstream project adopts a tag, not a moving `main`. Settings such as branch protection are never inherited from a GitHub template and must be configured per repository.
 
 ## Source material
 
