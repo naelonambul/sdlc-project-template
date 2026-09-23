@@ -38,26 +38,11 @@ See `.agents/skills/sdlc-artifacts/SKILL.md` for the workflow.
 - `.agents/skills/`: on-demand shared agent procedures and tool policies. `.claude/skills/` holds thin symlink adapters.
 - `evals/`: agent regression evaluations, added only from observed failures.
 - `docs/`: supporting, reference, and historical documentation only.
-- `prototype/`: optional, removable plain HTML/CSS/JavaScript discovery workspace with lint and formatting.
 - `.github/`: the `Change-ID` pull-request template and the `repository` CI workflow. See `docs/host-setup.md` for one-time GitHub settings.
-
-## Optional prototype workspace
-
-`prototype/` is a self-contained UI/UX discovery workspace using vanilla HTML, CSS, and JavaScript. Its quality stack mirrors the proven Pungsu prototype setup: ESLint, Stylelint, HTMLHint, and Prettier. It is the template's only Node.js dependency. Run `npm ci` inside the directory, then `npm run check`, or `python3 scripts/repo.py verify --group prototype`.
-
-The directory is deliberately optional. Projects that do not need a frontend or UI prototype, including backend-only projects, can delete it. Deleting it takes three steps:
-
-1. Remove the `prototype/` directory.
-2. Remove its `prototype` entry in `checks.json`.
-3. Remove the `verify-prototype` job, and its entry in the summary's `needs`, from `.github/workflows/repository.yml`.
-
-`repo.py status` fails until `checks.json` and the workflow agree. Nothing else depends on the prototype.
-
-Prototype output is evidence and exploration, not authority. Any discovery that changes the baseline or an approved change must go back through the relevant owner approval.
 
 ## Authority model
 
-The root baseline plus approved change packets are the SDLC authority. `docs/` and any optional supporting workspace such as `prototype/` must not override them. Concurrent initiatives are separate change packets; one pull request carries one change.
+The root baseline plus approved change packets are the SDLC authority. `docs/` must not override them. Concurrent initiatives are separate change packets; one pull request carries one change.
 
 ## Agent neutrality
 

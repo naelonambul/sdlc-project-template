@@ -65,8 +65,6 @@ Keep the generic `core` group dependent only on Python and Git. A check that nee
 
 Never model a gate that does not apply as a skipped CI job. `repo.py` decides `not-applicable` from routing and records the reason.
 
-A nested self-contained workspace such as the optional `prototype/` owns its group and job. Removing the workspace removes both.
-
 ## Validate proportionally
 
 - During iteration, run the smallest relevant checks that provide fast feedback.
