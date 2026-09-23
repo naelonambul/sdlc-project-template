@@ -2,7 +2,7 @@
 
 A disposable UI/UX discovery workspace for exploratory prototypes, spikes, mock implementations, and interaction experiments.
 
-Prototype content is supporting evidence, not SDLC authority. It must not override accepted `../intent.md`, `../spec.md`, or `../plan.md`. If a prototype changes the understanding of the problem, requirements, design, or implementation approach, update the relevant root artifact and obtain human acceptance through the normal gate.
+Prototype content is supporting evidence, not SDLC authority. It must not override the root `../intent.md` and `../spec.md` baseline or an approved change packet in `../changes/`. If a prototype changes the understanding of the problem, requirements, design, or implementation approach, update the relevant change artifact and obtain owner approval through the normal gate.
 
 ## Technology boundary
 

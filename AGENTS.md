@@ -5,25 +5,22 @@ Keep this file short. It contains repository-wide invariants that are relevant i
 ## Authority
 
 1. Explicit decisions from the human owner are final.
-2. This `AGENTS.md` defines repository operating rules and SDLC gates.
-3. Accepted root artifacts form the active authority chain: `intent.md` -> `spec.md` -> `plan.md`.
-4. Upstream accepted artifacts constrain downstream artifacts. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
-5. Repository source, tests, and configuration are authoritative for the current implemented state. Accepted artifacts authorize the intended change.
+2. This `AGENTS.md` defines repository operating rules. It is guidance, not the enforcement boundary: hard rules are enforced by `scripts/repo.py`, tests, and CI, and some agents (for example subagents that omit project instructions) never read this file.
+3. The root `intent.md` and `spec.md` are the durable product baseline. Work happens in change packets, `changes/<id>/`, each with its own plan; there is no root plan. See `changes/README.md`.
+4. Approved upstream artifacts constrain downstream ones. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
+5. Repository source, tests, and configuration are authoritative for the current implemented state. Approved change packets authorize intended changes.
 6. `REVIEW.md` defines review policy, not product intent.
-7. `docs/` is supporting/reference/history material. If `prototype/` exists, it is supporting discovery material. Neither overrides accepted root artifacts.
+7. `docs/` is supporting/reference/history material. If `prototype/` exists, it is supporting discovery material. Neither overrides the baseline or an approved change.
 
 ## SDLC gates
 
-- Root artifacts use `status: not-started`, `status: draft`, or `status: accepted`.
-- Never infer human acceptance from file contents, Git state, or an agent's own judgment.
-- Change an artifact to `accepted` only after the human owner explicitly approves it.
-- Do not start `spec.md` until `intent.md` is accepted.
-- Do not start `plan.md` until `spec.md` is accepted.
-- Do not implement until `plan.md` is accepted.
-- During later stages, continue reading all accepted upstream artifacts.
-- If implementation requires a material departure from the accepted plan, stop, revise `plan.md`, and obtain human acceptance before continuing.
+- Run `python3 scripts/repo.py status --change <id>`. It computes each change's stage, freshness, approval and readiness from repository facts; never store or assert those states by hand.
+- Artifacts are approved in order `intent -> spec -> plan`, only by the human owner, via digest-bound claims in `change.json`. Never infer approval from file contents, Git state, or your own judgment.
+- Do not change anything outside the packet until status reports `readiness=ready`, and stay inside the change's declared `write_scope`.
+- If implementation requires a material departure from the approved plan, stop, revise the plan, and obtain a fresh owner approval.
+- Local approval is `unverified`: it detects stale approvals, not identity.
 
-Use the `sdlc-artifacts` skill whenever creating, revising, or checking readiness of root artifacts.
+Use the `sdlc-artifacts` skill whenever creating, revising, approving, or closing a change.
 
 ## Working rules
 
@@ -50,7 +47,7 @@ These are intentionally unset in the generic template. Once the product stack is
 
 Before reporting implementation complete:
 
-- Confirm the accepted plan is satisfied or explicitly revised.
+- Confirm the approved change plan is satisfied or explicitly revised and re-approved.
 - Run the applicable repository-native validation.
 - If an optional self-contained workspace changed, run its applicable local quality checks too.
 - Report the exact validation performed and its result.

@@ -1,13 +1,13 @@
 # Review Policy
 
-Review the implementation against the human owner's explicit decisions, `AGENTS.md`, and the accepted `intent.md`, `spec.md`, and `plan.md`.
+Review the implementation against the human owner's explicit decisions, `AGENTS.md`, the root `intent.md` and `spec.md` baseline, and the approved change packet (`changes/<id>/`) named by the pull request's `Change-ID`.
 
 ## Review passes
 
 1. **Correctness and regressions**
    - Find logic errors, broken edge cases, unintended behavior changes, and incomplete implementation.
 2. **Artifact compliance**
-   - Confirm the change solves the accepted intent, satisfies the accepted spec, and follows the accepted plan.
+   - Confirm the change solves the approved intent, satisfies the approved spec, and follows the approved plan.
    - Flag any undocumented material plan deviation.
 3. **Security, privacy, and safety**
    - Find exposed secrets, unsafe input handling, authorization gaps, privacy leaks, insecure defaults, and dangerous operational behavior relevant to the change.

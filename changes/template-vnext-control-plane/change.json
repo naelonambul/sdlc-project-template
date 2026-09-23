@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "id": "template-vnext-control-plane",
+  "kind": "repository",
+  "title": "Template vNext control plane: change packets, repo.py status/verify, checks.json, CI",
+  "base": {
+    "ref": "main",
+    "commit": "4f2d426961a2df109f19109078964659a62673e5"
+  },
+  "baseline": {},
+  "write_scope": [
+    "scripts/**",
+    "checks.json",
+    "changes/_template/**",
+    "changes/README.md",
+    "plan.md",
+    "intent.md",
+    "spec.md",
+    ".agents/skills/**",
+    ".github/**",
+    ".gitattributes",
+    ".gitignore",
+    "AGENTS.md",
+    "README.md",
+    "REVIEW.md",
+    "docs/**",
+    "evals/README.md",
+    "prototype/README.md"
+  ],
+  "approvals": []
+}
