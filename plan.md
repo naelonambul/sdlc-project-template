@@ -1,10 +1,14 @@
+---
+status: not-started
+accepted_by:
+accepted_at:
+---
+
 # Implementation Plan
 
 ## Summary
 
 ## Files and components that change
-
-<!-- Must be covered by change.json write_scope. -->
 
 ## Order of work
 

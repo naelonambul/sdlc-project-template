@@ -9,8 +9,8 @@ Treat quality tooling as repository infrastructure. Reuse established tooling; b
 
 ## Determine the current state
 
-1. Read `AGENTS.md`, `checks.json`, the root baseline, and the approved change packet relevant to the task.
-2. Identify the language, framework, runtime, build system, and package manager from repository evidence or an explicit owner decision. Do not treat an exploratory prototype as a final stack decision.
+1. Read `AGENTS.md` and the accepted root artifacts relevant to the task.
+2. Identify the language, framework, runtime, build system, and package manager from repository evidence or an explicit accepted human decision. Do not treat an exploratory prototype as a final stack decision.
 3. Inspect repository-native command surfaces such as package scripts, build manifests, task runners, Makefiles, CI workflows, and existing scripts or config files.
 4. Classify each applicable gate as established, partial, or absent: build, test, lint, format-check, type-check, and project-specific verification.
 5. If the product stack is still unresolved, do not install competing quality tools. Surface the missing decision instead.
@@ -26,9 +26,9 @@ When the stack is established and suitable quality tooling is absent or material
 5. Keep configuration in the ecosystem's conventional location and ignore only generated or machine-local output.
 6. Expose reproducible commands for the applicable gates. Include a non-mutating format check as well as a formatting command when the formatter supports both.
 7. Preserve lockfiles and version constraints according to the ecosystem's normal package-management practice.
-8. If the tooling setup would materially depart from the approved change, revise its plan and obtain a fresh owner approval before proceeding.
+8. If the tooling setup would materially depart from accepted artifacts or an accepted plan, revise the relevant artifact and obtain human acceptance before proceeding.
 9. Run the new checks against the repository and fix starter configuration or source until the setup is genuinely usable. Do not weaken a rule merely to obtain a green result.
-10. Register each gate as a check in `checks.json` (see below). If a stable multi-command wrapper improves reproducibility, put it under `scripts/` and register the wrapper.
+10. Record the exact canonical commands in `AGENTS.md`. If a stable multi-command wrapper improves reproducibility, place the shared deterministic wrapper under `scripts/checks/`.
 
 ## Stack-aware selection guidance
 
@@ -49,29 +49,29 @@ Do not replace an existing valid toolchain with one of these examples merely bec
 - Do not introduce a different formatter, linter, test framework, or type checker merely because you prefer it.
 - Do not disable, weaken, skip, delete, or rewrite a failing check merely to make validation pass.
 - Do not silently change test expectations to match broken implementation behavior.
-- Change validation configuration only when the task actually requires that configuration change and the approved change authorizes it.
+- Change validation configuration only when the task actually requires that configuration change and the accepted artifacts authorize it.
 
-## Check registry contract
+## Canonical command contract
 
-`checks.json` is the single list of canonical checks. `python3 scripts/repo.py verify` runs it locally and in CI. Each check declares:
+After the product stack is established, keep the applicable root commands in `AGENTS.md` current:
 
-- `id` and `group`;
-- `argv`, an exact argument array (never a shell string), and `cwd`;
-- `timeout_seconds`;
-- `paths`, the changed paths that route to it. Unmapped changes run the full suite;
-- `requires`, the executables it needs. A missing executable is `blocked`, never passed.
+- Build
+- Test
+- Lint
+- Format check
+- Type check
 
-Keep the generic `core` group dependent only on Python and Git. A check that needs a stack toolchain (Node, JDK, Xcode, …) gets its own group and its own CI job in `.github/workflows/repository.yml`, which installs that toolchain and runs `repo.py verify --group <group>`. Add the job to the summary's `needs`. `repo.py status` fails when groups and jobs disagree. Groups are execution and isolation units only: a group-filtered run reports other checks as `not-run` and its evidence as incomplete, so a group can never stand in for the full required set.
+Use `not applicable` for a genuinely irrelevant gate rather than leaving a stale `not configured` entry. Commands should be runnable from the repository root or explicitly include the required working-directory change.
 
-Never model a gate that does not apply as a skipped CI job. `repo.py` decides `not-applicable` from routing and records the reason.
+A nested self-contained workspace such as optional `prototype/` may keep its own tooling. Its checks do not become a root product requirement unless the repository intentionally aggregates them.
 
 ## Validate proportionally
 
 - During iteration, run the smallest relevant checks that provide fast feedback.
-- Before completion, run every applicable canonical check through `repo.py verify` (use `--full` when routing is not enough), plus anything the approved plan requires.
-- Treat visual or runtime verification as part of validation when the approved plan requires it.
+- Before completion, run every applicable canonical check required by `AGENTS.md`, the accepted plan, or CI policy.
+- Treat visual or runtime verification as part of validation when the accepted plan requires it.
 - If meaningful validation cannot yet exist because the product stack is not established, state that fact instead of installing speculative tooling.
 
 ## Report evidence
 
-Report the exact commands or checks run, whether they passed, the `.evidence/` path, and any relevant limitation. Do not claim a check ran when it did not. `blocked` and `not-run` are not passes.
+Report the exact commands or checks run, whether they passed, and any relevant limitation. Do not claim a check ran when it did not.
