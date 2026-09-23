@@ -1,18 +1,18 @@
 # Review Policy
 
-Review the implementation against the human owner's explicit decisions, `AGENTS.md`, and the accepted `intent.md`, `spec.md`, and `plan.md`.
+Review the implementation against the human owner's explicit decisions, `AGENTS.md`, the root `intent.md` and `spec.md` baseline, and the approved change packet (`changes/<id>/`) named by the pull request's `Change-ID`.
 
 ## Review passes
 
 1. **Correctness and regressions**
    - Find logic errors, broken edge cases, unintended behavior changes, and incomplete implementation.
 2. **Artifact compliance**
-   - Confirm the change solves the accepted intent, satisfies the accepted spec, and follows the accepted plan.
+   - Confirm the change solves the approved intent, satisfies the approved spec, and follows the approved plan.
    - Flag any undocumented material plan deviation.
 3. **Security, privacy, and safety**
    - Find exposed secrets, unsafe input handling, authorization gaps, privacy leaks, insecure defaults, and dangerous operational behavior relevant to the change.
 4. **Verification quality**
-   - Confirm tests and other proof actually demonstrate the required behavior.
+   - Confirm tests and other proof actually demonstrate the required behavior, and that `repo.py verify` evidence exists for the reviewed revision.
    - Flag skipped, weakened, deleted, or misleading checks.
 5. **Maintainability**
    - Report complexity, duplication, or architectural damage only when it creates a concrete future cost or defect risk.
@@ -37,4 +37,4 @@ Do not invent findings to fill a quota. A clean review may report no substantive
 
 ## Separation of duties
 
-The agent that authored a change may self-check it, but it must not treat its own review as human approval. Prefer a fresh-context review for the final independent pass when practical.
+The agent that authored a change may self-check it, but it must not treat its own review as human approval. A digest-bound approval claim in `change.json` is `unverified` process metadata, not proof of who approved. A pull-request author cannot approve their own pull request, so an agent sharing the owner's GitHub identity cannot produce independent approval. Prefer a fresh-context review for the final independent pass when practical.

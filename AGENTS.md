@@ -5,25 +5,22 @@ Keep this file short. It contains repository-wide invariants that are relevant i
 ## Authority
 
 1. Explicit decisions from the human owner are final.
-2. This `AGENTS.md` defines repository operating rules and SDLC gates.
-3. Accepted root artifacts form the active authority chain: `intent.md` -> `spec.md` -> `plan.md`.
-4. Upstream accepted artifacts constrain downstream artifacts. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
-5. Repository source, tests, and configuration are authoritative for the current implemented state. Accepted artifacts authorize the intended change.
+2. This `AGENTS.md` defines repository operating rules. It is guidance, not the enforcement boundary: hard rules are enforced by `scripts/repo.py`, tests, and CI, and some agents (for example subagents that omit project instructions) never read this file.
+3. The root `intent.md` and `spec.md` are the durable product baseline. Work happens in change packets, `changes/<id>/`, each with its own plan; there is no root plan. See `changes/README.md`.
+4. Approved upstream artifacts constrain downstream ones. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
+5. Repository source, tests, and configuration are authoritative for the current implemented state. Approved change packets authorize intended changes.
 6. `REVIEW.md` defines review policy, not product intent.
-7. `docs/` is supporting/reference/history material. It does not override accepted root artifacts.
+7. `docs/` is supporting/reference/history material. It does not override the baseline or an approved change.
 
 ## SDLC gates
 
-- Root artifacts use `status: not-started`, `status: draft`, or `status: accepted`.
-- Never infer human acceptance from file contents, Git state, or an agent's own judgment.
-- Change an artifact to `accepted` only after the human owner explicitly approves it.
-- Do not start `spec.md` until `intent.md` is accepted.
-- Do not start `plan.md` until `spec.md` is accepted.
-- Do not implement until `plan.md` is accepted.
-- During later stages, continue reading all accepted upstream artifacts.
-- If implementation requires a material departure from the accepted plan, stop, revise `plan.md`, and obtain human acceptance before continuing.
+- Run `python3 scripts/repo.py status --change <id>`. It computes each change's stage, freshness, approval and readiness from repository facts; never store or assert those states by hand.
+- Artifacts are approved in order `intent -> spec -> plan`, only by the human owner, via digest-bound claims in `change.json`. Never infer approval from file contents, Git state, or your own judgment.
+- Do not change anything outside the packet until status reports `readiness=ready`, and stay inside the change's declared `write_scope`.
+- If implementation requires a material departure from the approved plan, stop, revise the plan, and obtain a fresh owner approval.
+- Local approval is `unverified`: it detects stale approvals, not identity.
 
-Use the `sdlc-artifacts` skill whenever creating, revising, or checking readiness of root artifacts.
+Use the `sdlc-artifacts` skill whenever creating, revising, approving, or closing a change.
 
 ## Working rules
 
@@ -34,25 +31,21 @@ Use the `sdlc-artifacts` skill whenever creating, revising, or checking readines
 - Do not weaken tests, lint rules, type checks, security checks, or configuration merely to make validation pass.
 - Do not commit tool caches or generated analysis metadata. The default `.gitignore` excludes known Serena and Graphify outputs.
 - Prefer repository-native commands and conventions over agent preferences.
-- Keep agent-specific adapters thin. Put shared policy in this file, skills, or deterministic scripts instead of duplicating it per agent.
+- Keep agent-specific adapters thin. Put shared policy in this file, skills, or deterministic scripts instead of duplicating it per agent. Do not add a `CLAUDE.md` that replaces this file; see `docs/agent-surfaces.md`.
 
-## Canonical project commands
+## Canonical commands
 
-These are intentionally unset in the generic template. Once the product stack is established, use the `repository-quality` skill to discover or bootstrap the repository-native quality toolchain and replace the applicable `not configured` entries with exact commands. Use `not applicable` only for genuinely irrelevant gates.
+- `python3 scripts/repo.py status --change <id>`: lifecycle, approval, identity, write-scope, and agent-surface gates.
+- `python3 scripts/repo.py verify --change <id>`: runs the checks registered in `checks.json` that the diff routes to (`--full` for all), and writes evidence to `.evidence/`.
 
-- Build: not configured
-- Test: not configured
-- Lint: not configured
-- Format check: not configured
-- Type check: not configured
+Project build, test, lint, format-check, and type-check commands are registered as checks in `checks.json`, not listed here. The generic template needs only Python 3 and Git. Stack toolchains belong to the product that adopts them. Use the `repository-quality` skill to discover or bootstrap them.
 
 ## Definition of done
 
 Before reporting implementation complete:
 
-- Confirm the accepted plan is satisfied or explicitly revised.
-- Run the applicable repository-native validation.
-- If an optional self-contained workspace changed, run its applicable local quality checks too.
-- Report the exact validation performed and its result.
+- Confirm the approved change plan is satisfied or explicitly revised and re-approved.
+- `repo.py status --change <id>` passes and `repo.py verify --change <id>` reports no `failed` or `blocked` check and a complete run (no `not-run` check). `--group` runs are partial execution units: CI runs every group in its own job, and the summary requires them all.
+- Report the exact validation performed, its result, and the evidence path. `blocked` is never success.
 - Review the change against `REVIEW.md`.
 - Confirm no generated analysis metadata, credentials, or unrelated changes are included.

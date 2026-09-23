@@ -8,46 +8,41 @@ This template turns the repository itself into the shared control plane for plan
 
 ```text
 idea
-  -> intent.md (draft -> accepted)
-  -> spec.md   (draft -> accepted)
-  -> plan.md   (draft -> accepted)
-  -> implementation + tests
-  -> review / pull request
-  -> merge / deploy / maintain
+  -> changes/<id>/  (intent -> spec -> plan, each approved by the owner in order)
+  -> implementation + verification, inside the change's write scope
+  -> merge accepted intent/spec into the root baseline
+  -> closure.json -> pull request -> merge (squash by default)
 ```
 
-A downstream stage starts only after the upstream artifact has been explicitly accepted by the human owner. Later stages continue to read all accepted upstream artifacts.
+The root `intent.md` and `spec.md` are the durable product baseline. A new product's first change is `product-init`, which establishes them. `python3 scripts/repo.py status` computes every change's stage, freshness, approval and readiness. See `changes/README.md`.
 
 ## Quick start
 
 1. Create a new repository from this GitHub template and clone it.
-2. Start with `intent.md`. Ask an agent to interrogate the idea until the problem, outcome, constraints, scope, and open questions are concrete.
-3. Explicitly accept `intent.md` when it is correct.
-4. Draft `spec.md` from the accepted intent and accept it after review.
-5. Draft `plan.md` from the accepted intent and spec and accept it after review.
-6. Implement only from an accepted plan.
-7. Run repository-native validation and review the change against `REVIEW.md` before merge.
+2. Copy `changes/_template/` to `changes/<id>/` for a `product-init` change, with copies of the root `intent.md` and `spec.md`.
+3. Ask an agent to interrogate the idea until the intent is concrete, then approve `intent.md` by adding a digest-bound claim to `change.json`.
+4. Draft and approve `spec.md`, then the change's `plan.md`, in that order.
+5. Implement only when `python3 scripts/repo.py status --change <id>` reports `readiness=ready`.
+6. Run repository-native validation, review against `REVIEW.md`, merge the accepted intent and spec into the root, add `closure.json`, and open a pull request with `Change-ID: <id>`.
 
-See `.agents/skills/sdlc-artifacts/SKILL.md` for the artifact workflow.
+See `.agents/skills/sdlc-artifacts/SKILL.md` for the workflow.
 
 ## Repository control plane
 
 - `AGENTS.md`: short, always-relevant repository invariants, gates, commands, and working rules.
 - `REVIEW.md`: shared review rubric.
-- `intent.md`: why the project/change exists and what outcome is wanted.
-- `spec.md`: what must be true and the approved design/requirements.
-- `plan.md`: how the accepted spec will be implemented and proven.
-- `.agents/skills/`: on-demand shared agent procedures and tool policies.
-- `scripts/`: deterministic checks and agent-neutral hook implementations.
-- `evals/`: regression evaluations for agent behavior and configuration.
+- `intent.md`, `spec.md`: durable product baseline (why, and what must be true).
+- `changes/`: one packet per change, with its own plan; `changes/README.md` defines the model.
+- `scripts/repo.py`: `status` computes change state and enforces gates; `verify` runs registered checks with routing and evidence. Standard-library Python only.
+- `checks.json`: the check registry (exact argv, cwd, timeout, routed paths, required tools, group).
+- `.agents/skills/`: on-demand shared agent procedures and tool policies. `.claude/skills/` holds thin symlink adapters.
+- `evals/`: agent regression evaluations, added only from observed failures.
 - `docs/`: supporting, reference, and historical documentation only.
-- `.github/`: pull-request and CI integration.
+- `.github/`: the `Change-ID` pull-request template and the `repository` CI workflow. See `docs/host-setup.md` for one-time GitHub settings.
 
 ## Authority model
 
-The root artifact chain is the current SDLC authority for the active project workflow. `docs/` must not override accepted root artifacts.
-
-This starter is intentionally optimized for one active project-level artifact chain at a time, which keeps a solo-developer workflow simple. A project that later needs independent concurrent initiatives can namespace its artifacts without changing the underlying gate semantics.
+The root baseline plus approved change packets are the SDLC authority. `docs/` must not override them. Concurrent initiatives are separate change packets; one pull request carries one change.
 
 ## Agent neutrality
 
@@ -69,7 +64,11 @@ Claude Code discovers these skills through thin `.claude/skills/<name>` symlinks
 
 ## Project initialization
 
-When a project chooses its application stack, establish the repository-native build, test, lint, format-check, and type-check commands, then record the canonical commands in `AGENTS.md`. Add deterministic wrappers and CI only when they represent real project behavior.
+When a project chooses its application stack, establish the repository-native build, test, lint, format-check, and type-check commands. Register each as a check in `checks.json`, and give checks that need a new toolchain their own group and CI job. Then do the one-time GitHub setup in `docs/host-setup.md`.
+
+## Template releases
+
+Template versions are Git tags plus release notes. A downstream project adopts a tag, not a moving `main`. Settings such as branch protection are never inherited from a GitHub template and must be configured per repository.
 
 ## Source material
 
