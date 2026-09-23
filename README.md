@@ -74,6 +74,8 @@ Included shared skills:
 
 Optional tool unavailability must not silently change the SDLC gates.
 
+Claude Code discovers these skills through thin `.claude/skills/<name>` symlinks to `.agents/skills/<name>`, and loads `AGENTS.md` only when no project `CLAUDE.md` shadows it. The template therefore ships no `CLAUDE.md`. See `docs/agent-surfaces.md` for the smoke-tested surfaces and known gaps.
+
 ## Project initialization
 
 When a project chooses its application stack, establish the repository-native build, test, lint, format-check, and type-check commands, then record the canonical commands in `AGENTS.md`. Add deterministic wrappers and CI only when they represent real project behavior.
