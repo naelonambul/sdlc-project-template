@@ -91,6 +91,8 @@ class Verify(RepoCase):
         result = self.verify("--full", "--group", "core")
         self.assertEqual(result["by_id"]["web"]["status"], "not-run")
         self.assertEqual(result["exit"], 0)
+        self.assertFalse(result["complete"], "a group-filtered run must never claim complete verification")
+        self.assertTrue(self.verify("--full")["complete"])
 
     def test_evidence_records_log_digest(self):
         self.configure(check("src", code="print('hello evidence')"))

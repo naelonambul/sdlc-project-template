@@ -5,7 +5,7 @@
   "title": "Template vNext control plane: change packets, repo.py status/verify, checks.json, CI",
   "base": {
     "ref": "main",
-    "commit": "4f2d426961a2df109f19109078964659a62673e5"
+    "commit": "6ca9e50c211c2867cdba893005e0939373b9b2b5"
   },
   "baseline": {},
   "write_scope": [
@@ -24,8 +24,7 @@
     "README.md",
     "REVIEW.md",
     "docs/**",
-    "evals/README.md",
-    "prototype/README.md"
+    "evals/README.md"
   ],
   "approvals": []
 }

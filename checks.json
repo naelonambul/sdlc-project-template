@@ -10,15 +10,6 @@
       "timeout_seconds": 600,
       "paths": ["scripts/**", "checks.json", "changes/**", ".github/**", ".claude/**", ".agents/**", "AGENTS.md", "intent.md", "spec.md", ".gitattributes"],
       "requires": ["python3", "git"]
-    },
-    {
-      "id": "prototype",
-      "group": "prototype",
-      "argv": ["npm", "run", "check"],
-      "cwd": "prototype",
-      "timeout_seconds": 600,
-      "paths": ["prototype/**"],
-      "requires": ["npm"]
     }
   ]
 }

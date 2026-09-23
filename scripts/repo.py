@@ -900,6 +900,9 @@ def cmd_verify(args) -> int:
         "change": active.id,
         "groups": sorted(groups) or "all",
         "routing": routing,
+        # Complete only when no check was left unrun. A group-filtered run is a
+        # partial execution unit, never a full verification on its own.
+        "complete": not any(r["status"] == "not-run" for r in results),
         "checks": results,
     }
     if not args.dry_run:
@@ -913,6 +916,9 @@ def cmd_verify(args) -> int:
             print(f"{r['status']:>14}  {r['id']}  ({r['reason']})")
             if r["status"] in ("failed", "blocked") and r.get("log"):
                 print(f"{'':>16}log: {r['log']}")
+        not_run = [r["id"] for r in results if r["status"] == "not-run"]
+        if not_run:
+            print(f"INCOMPLETE: {len(not_run)} check(s) not run: {not_run}")
         if not args.dry_run:
             print(f"evidence: {out_dir / 'evidence.json'}")
     bad = [r for r in results if r["status"] in ("failed", "blocked")]
