@@ -10,7 +10,7 @@ Keep this file short. It contains repository-wide invariants that are relevant i
 4. Upstream accepted artifacts constrain downstream artifacts. Never silently resolve a contradiction by overriding the upstream artifact; surface the conflict to the human owner.
 5. Repository source, tests, and configuration are authoritative for the current implemented state. Accepted artifacts authorize the intended change.
 6. `REVIEW.md` defines review policy, not product intent.
-7. `docs/` is supporting/reference/history material. If `prototype/` exists, it is supporting discovery material. Neither overrides accepted root artifacts.
+7. `docs/` is supporting/reference/history material. It does not override accepted root artifacts.
 
 ## SDLC gates
 
