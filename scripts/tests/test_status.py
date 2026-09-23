@@ -277,6 +277,7 @@ class Closure(RepoCase):
         result = self.status(cwd=clone)
         self.assertEqual(result["by_id"]["init"]["closure"], "invalid")
         self.assertIn("closure-history", self.codes(result, "init"))
+        self.assertFailed(result, "shallow history")
 
 
 class Surfaces(RepoCase):

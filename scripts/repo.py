@@ -960,8 +960,15 @@ def compute_status(ctx: Context, args) -> dict:
         if cid == active.id:
             failures += [f"{cid}: {r.message}" for r in errors]
         else:
-            # other packets fail the gate only on integrity problems, not on in-flight lifecycle state
-            failures += [f"{cid}: {r.message}" for r in errors if r.code in ("invalid-change", "frozen-integrity", "scope-path-escape") or r.code.startswith("closure") and st.closure in ("frozen", "invalid") and st.anchor]
+            # Other packets fail the gate only on integrity problems, not on in-flight
+            # lifecycle state: invalid records, unverifiable history, or a broken
+            # anchored (merged) closure.
+            integrity = ("invalid-change", "scope-path-escape", "frozen-integrity", "closure-history")
+            failures += [
+                f"{cid}: {r.message}"
+                for r in errors
+                if r.code in integrity or (r.code.startswith("closure") and st.anchor)
+            ]
     failures += [r.message for r in surface if r.level == "error"]
     result["changes"] = [statuses[c].as_dict() for c in ids]
     result["surface"] = [r.as_dict() for r in surface]
