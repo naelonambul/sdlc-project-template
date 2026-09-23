@@ -320,5 +320,35 @@ class Surfaces(RepoCase):
         self.assertFailed(self.status(), "is a copy")
 
 
+class CheckWiring(RepoCase):
+    WORKFLOW = "jobs:\n  a:\n    steps:\n      - run: python3 scripts/repo.py verify --group core $ARGS\n"
+
+    def configure(self, groups, workflow):
+        checks = [
+            {"id": f"c-{g}", "group": g, "argv": ["true"], "cwd": ".", "timeout_seconds": 5, "paths": ["**"]}
+            for g in groups
+        ]
+        self.write("checks.json", json.dumps({"schema": 1, "checks": checks}))
+        self.write(".github/workflows/repository.yml", workflow)
+        self.commit("wiring")
+
+    def test_wired_groups_pass(self):
+        self.configure(["core"], self.WORKFLOW)
+        self.assertTrue(self.status()["ok"])
+
+    def test_group_without_ci_job_fails(self):
+        self.configure(["core", "web"], self.WORKFLOW)
+        self.assertFailed(self.status(), "check group 'web' has no")
+
+    def test_ci_job_for_undeclared_group_fails(self):
+        self.configure([], self.WORKFLOW)
+        self.assertFailed(self.status(), "does not declare")
+
+    def test_invalid_checks_json_fails_status(self):
+        self.write("checks.json", json.dumps({"schema": 1, "checks": [{"id": "x", "argv": "make test"}]}))
+        self.commit("bad")
+        self.assertFailed(self.status(), "never a shell string")
+
+
 if __name__ == "__main__":
     unittest.main()

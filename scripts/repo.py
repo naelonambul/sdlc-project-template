@@ -832,6 +832,30 @@ def source_identity(ctx: Context) -> dict:
     return {"commit": commit.strip() if commit else None, "dirty": bool(dirty and dirty.strip())}
 
 
+WORKFLOW = Path(".github/workflows/repository.yml")
+
+
+def config_findings(ctx: Context) -> list[Reason]:
+    """checks.json must be valid, and every check group must have exactly the CI job that runs it."""
+    config = load_config(ctx.root)
+    if not config:
+        return []
+    problems = validate_checks(config)
+    if problems:
+        return [Reason("error", "checks-invalid", p) for p in problems]
+    workflow = ctx.root / WORKFLOW
+    if not workflow.is_file():
+        return []
+    declared = {c.get("group", "core") for c in config["checks"]}
+    wired = set(re.findall(r"repo\.py verify\b[^\n]*?--group[ =](\S+)", workflow.read_text()))
+    findings = []
+    for group in sorted(declared - wired):
+        findings.append(Reason("error", "checks-unwired", f"check group {group!r} has no `repo.py verify --group {group}` job in {WORKFLOW}"))
+    for group in sorted(wired - declared):
+        findings.append(Reason("error", "checks-unwired", f"{WORKFLOW} runs group {group!r}, which checks.json does not declare"))
+    return findings
+
+
 def cmd_verify(args) -> int:
     ctx = make_context(args)
     config = load_config(ctx.root)
@@ -925,7 +949,7 @@ def compute_status(ctx: Context, args) -> dict:
     if active.id in statuses:
         result["active"] = active.id
         result["changed_paths"] = check_scope(ctx, statuses[active.id])
-    surface = surface_findings(ctx)
+    surface = surface_findings(ctx) + config_findings(ctx)
     failures = list(active.errors)
     if active.id is None and not active.errors and args.pr_body is not None:
         failures.append("pull request has no Change-ID")
