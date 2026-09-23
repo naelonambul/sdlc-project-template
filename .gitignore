@@ -111,8 +111,3 @@ graphify-out/
 # Temporary agent analysis/export directories should stay outside the repo.
 .agent-tmp/
 .agent-cache/
-
-# -----------------------------------------------------------------------------
-# repo.py verify evidence (raw logs + evidence.json per run)
-# -----------------------------------------------------------------------------
-.evidence/

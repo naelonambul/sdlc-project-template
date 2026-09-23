@@ -1,5 +1,8 @@
-<!-- sdlc:baseline-unestablished -->
-<!-- Root baseline. A product-init change establishes it: its accepted change-local copy replaces this file whole. Remove the marker line above in that change. -->
+---
+status: not-started
+accepted_by:
+accepted_at:
+---
 
 # Intent
 
