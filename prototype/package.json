@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Disposable HTML/CSS/JavaScript UI/UX discovery workspace subordinate to repository SDLC artifacts.",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
   "scripts": {
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
     "lint:js": "eslint . --no-error-on-unmatched-pattern",

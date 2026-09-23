@@ -27,11 +27,13 @@ python3 -m http.server 8000
 ## Quality tooling
 
 The prototype keeps its lint/format tooling inside this directory so it remains self-contained.
-Node.js is required for quality checks only, not at runtime.
+Node.js is required for quality checks only, not at runtime. The supported range is
+`^20.19.0 || ^22.13.0 || >=24` (declared in `package.json` `engines`; ESLint 10 sets the floor).
+`package-lock.json` is committed, so install exactly the locked versions with `npm ci`.
 
 ```sh
 cd prototype
-npm install
+npm ci
 
 npm run lint          # ESLint + Stylelint + HTMLHint
 npm run format        # Prettier: rewrite files
