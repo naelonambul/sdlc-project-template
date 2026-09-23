@@ -63,8 +63,6 @@ After the product stack is established, keep the applicable root commands in `AG
 
 Use `not applicable` for a genuinely irrelevant gate rather than leaving a stale `not configured` entry. Commands should be runnable from the repository root or explicitly include the required working-directory change.
 
-A nested self-contained workspace such as optional `prototype/` may keep its own tooling. Its checks do not become a root product requirement unless the repository intentionally aggregates them.
-
 ## Validate proportionally
 
 - During iteration, run the smallest relevant checks that provide fast feedback.
