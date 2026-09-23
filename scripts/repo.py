@@ -14,8 +14,11 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import signal
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
@@ -696,6 +699,201 @@ def surface_findings(ctx: Context) -> list[Reason]:
     return findings
 
 
+
+# --------------------------------------------------------------------------
+# verify: registered checks
+# --------------------------------------------------------------------------
+
+CHECK_KEYS = {"id", "group", "argv", "cwd", "timeout_seconds", "paths", "requires"}
+CHECK_STATUSES = ("passed", "failed", "blocked", "not-run", "not-applicable")
+
+
+def validate_checks(config: dict) -> list[str]:
+    problems = []
+    checks = config.get("checks")
+    if config.get("schema") != SCHEMA or not isinstance(checks, list):
+        return [f"checks.json needs \"schema\": {SCHEMA} and a \"checks\" list"]
+    seen = set()
+    for i, check in enumerate(checks):
+        where = f"checks[{i}]"
+        if not isinstance(check, dict):
+            problems.append(f"{where} must be an object")
+            continue
+        extra = set(check) - CHECK_KEYS
+        if extra:
+            problems.append(f"{where} has unknown keys {sorted(extra)}")
+        cid = check.get("id")
+        if not isinstance(cid, str) or not ID_RE.match(cid) or cid in seen:
+            problems.append(f"{where}.id must be a unique lowercase id")
+        seen.add(cid)
+        argv = check.get("argv")
+        if not isinstance(argv, list) or not argv or not all(isinstance(a, str) and a for a in argv):
+            problems.append(f"{where}.argv must be a non-empty array of strings (never a shell string)")
+        cwd = check.get("cwd")
+        if not isinstance(cwd, str) or (cwd != "." and scope_pattern_error(cwd)) or any(c in cwd for c in "*?"):
+            problems.append(f"{where}.cwd must be '.' or a relative directory")
+        timeout = check.get("timeout_seconds")
+        if not isinstance(timeout, (int, float)) or isinstance(timeout, bool) or timeout <= 0:
+            problems.append(f"{where}.timeout_seconds must be a positive number")
+        paths = check.get("paths")
+        if not isinstance(paths, list) or not paths or any(scope_pattern_error(p) for p in paths):
+            problems.append(f"{where}.paths must be a non-empty list of relative path patterns")
+        requires = check.get("requires", [])
+        if not isinstance(requires, list) or not all(isinstance(r, str) and r for r in requires):
+            problems.append(f"{where}.requires must be a list of executable names")
+        if not isinstance(check.get("group", "core"), str):
+            problems.append(f"{where}.group must be a string")
+    return problems
+
+
+def route(ctx: Context, checks: list[dict], full: bool) -> tuple[dict, dict]:
+    """Return ({check id: (selected, reason)}, routing facts)."""
+    if full:
+        return {c["id"]: (True, "full suite requested") for c in checks}, {"mode": "full"}
+    base, how = resolve_base(ctx, None)
+    if base is None:
+        return {c["id"]: (True, f"full suite: {how}") for c in checks}, {"mode": "full", "reason": how}
+    paths = changed_paths(ctx, base)
+    unmapped = [p for p in paths if not any(matches_any(p, c["paths"]) for c in checks)]
+    facts = {"mode": "routed", "base": base, "base_source": how, "changed_paths": paths, "unmapped_paths": unmapped}
+    if unmapped:
+        return {c["id"]: (True, f"full suite: {len(unmapped)} unmapped changed path(s)") for c in checks}, facts
+    decisions = {}
+    for c in checks:
+        hits = [p for p in paths if matches_any(p, c["paths"])]
+        decisions[c["id"]] = (True, f"{len(hits)} changed path(s) match") if hits else (False, "no changed path matches this check's paths")
+    return decisions, facts
+
+
+def tool_version(executable: str) -> str | None:
+    try:
+        proc = subprocess.run([executable, "--version"], capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    out = (proc.stdout or proc.stderr).strip().splitlines()
+    return out[0] if out else None
+
+
+def log_digest(path: Path) -> str | None:
+    return file_digest(path)
+
+
+def run_check(ctx: Context, check: dict, log_path: Path) -> dict:
+    record = {
+        "id": check["id"],
+        "group": check.get("group", "core"),
+        "argv": check["argv"],
+        "cwd": check["cwd"],
+        "timeout_seconds": check["timeout_seconds"],
+        "exit_code": None,
+        "duration_seconds": None,
+        "log": None,
+        "log_sha256": None,
+        "tools": {},
+    }
+    cwd = (ctx.root / check["cwd"]).resolve()
+    if not cwd.is_dir():
+        return {**record, "status": "blocked", "reason": f"working directory {check['cwd']!r} does not exist"}
+    needed = list(dict.fromkeys([*check.get("requires", []), check["argv"][0]]))
+    missing = [t for t in needed if shutil.which(t) is None and not (cwd / t).is_file()]
+    if missing:
+        return {**record, "status": "blocked", "reason": f"required executable(s) not found: {missing}"}
+    record["tools"] = {t: tool_version(t) for t in check.get("requires", [])}
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    with open(log_path, "wb") as log:
+        proc = subprocess.Popen(check["argv"], cwd=cwd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+        try:
+            code = proc.wait(timeout=check["timeout_seconds"])
+            timed_out = False
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            code = proc.wait()
+    record["duration_seconds"] = round(time.monotonic() - started, 3)
+    record["exit_code"] = None if timed_out else code
+    record["log"] = log_path.relative_to(ctx.root).as_posix() if log_path.is_relative_to(ctx.root) else str(log_path)
+    record["log_sha256"] = log_digest(log_path)
+    if timed_out:
+        return {**record, "status": "failed", "reason": f"timed out after {check['timeout_seconds']}s"}
+    if code != 0:
+        return {**record, "status": "failed", "reason": f"exit code {code}"}
+    if record["log_sha256"] is None:
+        return {**record, "status": "blocked", "reason": "check exited 0 but its evidence log is missing"}
+    return {**record, "status": "passed", "reason": "exit code 0"}
+
+
+def source_identity(ctx: Context) -> dict:
+    commit = git(ctx.root, "rev-parse", "HEAD", check=False)
+    dirty = git(ctx.root, "status", "--porcelain", "--untracked-files=normal", check=False)
+    return {"commit": commit.strip() if commit else None, "dirty": bool(dirty and dirty.strip())}
+
+
+def cmd_verify(args) -> int:
+    ctx = make_context(args)
+    config = load_config(ctx.root)
+    problems = validate_checks(config)
+    if problems:
+        for p in problems:
+            print(f"blocked: {p}", file=sys.stderr)
+        return 1
+    checks = config["checks"]
+    groups = set(args.group or [])
+    unknown = groups - {c.get("group", "core") for c in checks}
+    if unknown:
+        print(f"blocked: unknown check group(s) {sorted(unknown)}", file=sys.stderr)
+        return 1
+    active = resolve_active(ctx, args.change, read_pr_body(args), args.branch, change_ids(ctx.root))
+    if active.errors and (args.change or args.pr_body is not None or args.require_change):
+        for e in active.errors:
+            print(f"blocked: {e}", file=sys.stderr)
+        return 1
+    decisions, routing = route(ctx, checks, args.full)
+    run_id = _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    out_dir = Path(args.evidence_dir or ctx.root / ".evidence") / run_id
+    results = []
+    for check in checks:
+        group = check.get("group", "core")
+        selected, reason = decisions[check["id"]]
+        base = {"id": check["id"], "group": group, "argv": check["argv"], "cwd": check["cwd"], "timeout_seconds": check["timeout_seconds"]}
+        if groups and group not in groups:
+            results.append({**base, "status": "not-run", "reason": f"group {group!r} not requested"})
+        elif not selected:
+            results.append({**base, "status": "not-applicable", "reason": reason})
+        elif args.dry_run:
+            results.append({**base, "status": "not-run", "reason": f"dry run; would run ({reason})"})
+        else:
+            record = run_check(ctx, check, out_dir / f"{check['id']}.log")
+            record["route"] = reason
+            results.append(record)
+    evidence = {
+        "schema": SCHEMA,
+        "run_id": run_id,
+        "source": source_identity(ctx),
+        "change": active.id,
+        "groups": sorted(groups) or "all",
+        "routing": routing,
+        "checks": results,
+    }
+    if not args.dry_run:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
+    if args.json:
+        json.dump(evidence, sys.stdout, indent=2)
+        print()
+    else:
+        for r in results:
+            print(f"{r['status']:>14}  {r['id']}  ({r['reason']})")
+            if r["status"] in ("failed", "blocked") and r.get("log"):
+                print(f"{'':>16}log: {r['log']}")
+        if not args.dry_run:
+            print(f"evidence: {out_dir / 'evidence.json'}")
+    bad = [r for r in results if r["status"] in ("failed", "blocked")]
+    return 1 if bad else 0
+
 # --------------------------------------------------------------------------
 # commands
 # --------------------------------------------------------------------------
@@ -801,6 +999,12 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--json", action="store_true", help="machine-readable output")
 
     common(sub.add_parser("status", help="compute change lifecycle state and gates"))
+    verify = sub.add_parser("verify", help="run registered checks with routing and evidence")
+    common(verify)
+    verify.add_argument("--full", action="store_true", help="run every check regardless of routing (pushes to the baseline branch)")
+    verify.add_argument("--group", action="append", help="only run checks in this group (repeatable); others are reported not-run")
+    verify.add_argument("--dry-run", action="store_true", help="report routing without running checks")
+    verify.add_argument("--evidence-dir", help="evidence root (default: .evidence/)")
     return parser
 
 
@@ -809,6 +1013,8 @@ def main(argv=None) -> int:
     try:
         if args.command == "status":
             return cmd_status(args)
+        if args.command == "verify":
+            return cmd_verify(args)
     except GitError as exc:
         print(f"blocked: {exc}", file=sys.stderr)
         return 2
